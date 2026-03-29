@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matador AI — ROI Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0c0c0e;--surface:#141418;--surface2:#1c1c22;--border:rgba(255,255,255,0.07);--border-strong:rgba(255,255,255,0.13);--text:#f0f0f0;--text-muted:#888;--text-dim:#555;--green:#00d97e;--green-dim:rgba(0,217,126,0.10);--blue:#4a8fff;--amber:#f5a623}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+.page{max-width:1120px;margin:0 auto;padding:40px 32px 80px}
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.logo-lockup{display:flex;align-items:center;gap:14px}
+.logo-mark{width:42px;height:42px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.logo-text .brand{font-size:17px;font-weight:600;letter-spacing:-.3px}
+.logo-text .sub{font-size:12px;color:var(--text-muted)}
+.header-badge{font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,217,126,0.2);padding:5px 12px;border-radius:20px;letter-spacing:.3px}
+.section-label{font-size:11px;font-weight:500;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px}
+.inputs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.inp-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:border-color .2s}
+.inp-card:focus-within{border-color:var(--green)}
+.inp-card label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.inp-card input{width:100%;background:none;border:none;outline:none;font-size:20px;font-weight:500;color:var(--text);font-family:'DM Sans',sans-serif}
+.lift-slider-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:28px}
+.lift-slider-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px}
+.lift-label-group{flex:1}
+.lift-scenario-name{font-size:16px;font-weight:600;letter-spacing:-.2px;line-height:1;margin-bottom:6px}
+.lift-scenario-name.blue{color:var(--blue)}
+.lift-scenario-name.green{color:var(--green)}
+.lift-scenario-name.amber{color:var(--amber)}
+.lift-scenario-desc{font-size:12px;color:var(--text-muted);line-height:1.6;max-width:540px}
+.lift-scenario-badge{font-size:11px;font-weight:500;font-family:'DM Mono',monospace;padding:4px 12px;border-radius:20px;border:1px solid;white-space:nowrap;flex-shrink:0}
+.lift-scenario-badge.conservative{background:rgba(74,143,255,0.1);color:var(--blue);border-color:rgba(74,143,255,0.25)}
+.lift-scenario-badge.normal{background:rgba(0,217,126,0.1);color:var(--green);border-color:rgba(0,217,126,0.25)}
+.lift-scenario-badge.optimistic{background:rgba(245,166,35,0.1);color:var(--amber);border-color:rgba(245,166,35,0.25)}
+.lift-track-labels{display:flex;justify-content:space-between;margin-bottom:8px}
+.lift-track-label{font-size:11px;color:var(--text-dim);text-align:center;flex:1}
+.lift-track-label.active-blue{color:var(--blue);font-weight:500}
+.lift-track-label.active-green{color:var(--green);font-weight:500}
+.lift-track-label.active-amber{color:var(--amber);font-weight:500}
+input[type=range].lift-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:linear-gradient(to right,var(--blue) 0%,var(--green) 50%,var(--amber) 100%);outline:none;cursor:pointer}
+input[type=range].lift-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--text);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--green);cursor:pointer}
+input[type=range].lift-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--text);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--green);cursor:pointer}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.metric-card.highlight{border-color:rgba(0,217,126,.25)}
+.metric-card.highlight::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)}
+.metric-label{font-size:11px;color:var(--text-muted);margin-bottom:8px}
+.metric-value{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-.5px;line-height:1}
+.metric-value.green{color:var(--green)}
+.overlap-box{background:var(--surface2);border:1px solid var(--border-strong);border-radius:14px;padding:24px 28px;margin-bottom:28px}
+.overlap-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+.overlap-icon{width:38px;height:38px;flex-shrink:0;border-radius:9px;background:var(--green-dim);border:1px solid rgba(0,217,126,0.2);display:flex;align-items:center;justify-content:center;font-size:17px}
+.overlap-head-text h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;letter-spacing:-.2px}
+.overlap-head-text p{font-size:13px;color:var(--text-muted);line-height:1.65}
+.overlap-story{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.overlap-story-label{font-size:10px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px}
+.overlap-step{display:flex;align-items:flex-start;gap:14px;padding:11px 0;border-bottom:1px solid var(--border)}
+.overlap-step:last-child{border-bottom:none}
+.overlap-dot{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:var(--surface2);border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--green);font-family:'DM Mono',monospace;margin-top:1px}
+.overlap-feat{font-size:11px;font-weight:500;color:var(--green);margin-bottom:3px;letter-spacing:.2px}
+.overlap-text{font-size:13px;color:var(--text-muted);line-height:1.55}
+.overlap-conclusion{font-size:13px;color:var(--text-muted);line-height:1.75;padding-top:14px;border-top:1px solid var(--border);margin-top:4px}
+.overlap-conclusion strong{color:var(--text)}
+.cx-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.cx-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.cx-icon{font-size:20px;margin-bottom:10px}
+.cx-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;letter-spacing:-.1px}
+.cx-body{font-size:12px;color:var(--text-muted);line-height:1.7}
+.feature-section{display:grid;grid-template-columns:1fr 370px;gap:16px;margin-bottom:20px;align-items:start}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.feature-table{width:100%;border-collapse:collapse}
+.feature-table thead tr{background:var(--surface2)}
+.feature-table th{font-size:11px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.feature-table th.right{text-align:right}
+.feature-table td{padding:11px 16px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.feature-table td.right{text-align:right}
+.feature-table tr:last-child td{border-bottom:none}
+.feature-table tr.blended{background:rgba(0,217,126,.05)}
+.feature-table tr.blended td{font-weight:500;border-top:1px solid rgba(0,217,126,.15);border-bottom:none}
+.feature-row{cursor:pointer;transition:background .15s}
+.feature-row:hover{background:rgba(255,255,255,.03)}
+.feature-row.active{background:rgba(0,217,126,.06)}
+.feature-row.active td:first-child{border-left:2px solid var(--green);padding-left:14px}
+.feat-name-cell{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.feat-name-text{font-weight:500;font-size:13px}
+.feat-hint{font-size:11px;color:var(--text-dim);margin-top:2px}
+.expand-btn{width:22px;height:22px;flex-shrink:0;border-radius:50%;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11px;transition:all .2s;font-family:'DM Mono',monospace}
+.feature-row.active .expand-btn{background:var(--green-dim);border-color:rgba(0,217,126,.35);color:var(--green)}
+.bar-container{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.deal-range{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);min-width:50px;text-align:right}
+.mini-bar{width:56px;height:4px;background:var(--border-strong);border-radius:2px;overflow:hidden}
+.mini-bar-fill{height:100%;background:var(--green);border-radius:2px;opacity:.6}
+.gross-range{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted)}
+.gross-range.green{color:var(--green);font-size:13px}
+.blended-label{display:flex;align-items:center;gap:8px}
+.blended-badge{font-size:10px;font-weight:500;font-family:'DM Mono',monospace;background:var(--green-dim);color:var(--green);border:1px solid rgba(0,217,126,.2);padding:2px 8px;border-radius:4px}
+.blended-deals{font-family:'DM Mono',monospace;font-size:13px;color:var(--green);font-weight:500}
+.detail-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:sticky;top:24px;min-height:480px;display:flex;flex-direction:column}
+.detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 24px;text-align:center;color:var(--text-dim)}
+.detail-empty .arrow-icon{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:18px;margin:0 auto 14px}
+.detail-empty p{font-size:13px;line-height:1.6;max-width:220px}
+.detail-content{display:none;flex-direction:column;flex:1}
+.detail-content.visible{display:flex}
+.detail-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.detail-tag{font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,217,126,.2);padding:2px 8px;border-radius:4px;letter-spacing:.3px;display:inline-block;margin-bottom:8px}
+.detail-title{font-size:14px;font-weight:600;color:var(--text);line-height:1.35;letter-spacing:-.2px}
+.detail-body{padding:18px 20px;flex:1;overflow-y:auto}
+.detail-body p{font-size:13px;color:var(--text-muted);line-height:1.75;margin-bottom:14px}
+.detail-body p:last-child{margin-bottom:0}
+.detail-body strong{color:var(--text);font-weight:500}
+.d-stats{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.d-stat{flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 10px 8px;text-align:center}
+.d-stat-val{font-size:15px;font-weight:600;color:var(--green);font-family:'DM Mono',monospace;line-height:1}
+.d-stat-lbl{font-size:10px;color:var(--text-dim);margin-top:5px;line-height:1.3}
+.d-bullets{list-style:none;margin-top:12px}
+.d-bullets li{font-size:13px;color:var(--text-muted);padding:5px 0 5px 15px;position:relative;line-height:1.55}
+.d-bullets li::before{content:'';position:absolute;left:0;top:12px;width:5px;height:5px;background:var(--green);border-radius:50%;opacity:.65}
+.roi-note{display:flex;align-items:flex-start;gap:12px;background:var(--green-dim);border:1px solid rgba(0,217,126,.2);border-radius:12px;padding:16px 20px;margin-bottom:32px}
+.roi-note .dot{width:8px;height:8px;background:var(--green);border-radius:50%;flex-shrink:0;margin-top:5px}
+.roi-note p{font-size:13px;color:var(--text-muted);line-height:1.6}
+.roi-note p strong{color:var(--green);font-weight:500}
+.chart-legend{display:flex;gap:20px;margin-bottom:12px;font-size:12px;color:var(--text-muted)}
+.chart-legend span{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+.chart-wrap{position:relative;width:100%;height:240px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:20px}
+.footer p{font-size:12px;color:var(--text-dim)}
+@media(max-width:900px){.feature-section{grid-template-columns:1fr}.detail-panel{position:static;min-height:300px}.cx-bar{grid-template-columns:1fr}}
+@media(max-width:640px){.page{padding:24px 16px 60px}.inputs-grid,.metrics-grid{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column;gap:14px}}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#fff!important;color:#111!important}
+  .page{padding:20px!important;max-width:100%!important}
+  input[type=range]{display:none}
+  .lift-slider-wrap,.detail-panel,.detail-empty{display:none!important}
+  .feature-section{grid-template-columns:1fr!important}
+  .feature-table tr.active td:first-child{border-left:none!important}
+  button{display:none!important}
+  .bundle-card,bundlecard{page-break-inside:avoid}
+  a{color:inherit!important;text-decoration:none!important}
+}
+
+/* Pricing section */
+.pricing-section{margin-top:56px;padding-top:40px;border-top:1px solid var(--border)}
+.pricing-section-head{margin-bottom:28px}
+.pricing-section-head h2{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.4px;margin-bottom:8px}
+.pricing-section-head p{font-size:13px;color:var(--text-muted);line-height:1.7;max-width:680px}
+.pricing-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.pricing-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative}
+.pricing-card.featured{border-color:rgba(0,217,126,.3)}
+.pricing-card.featured::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--green);border-radius:14px 14px 0 0}
+.pc-tag{font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+.pc-name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px;margin-bottom:6px;line-height:1.25}
+.pc-price{font-size:24px;font-weight:600;color:var(--green);letter-spacing:-.5px;margin-bottom:4px;line-height:1}
+.pc-price span{font-size:13px;font-weight:400;color:var(--text-muted)}
+.pc-desc{font-size:12px;color:var(--text-muted);line-height:1.65;margin-bottom:14px}
+.pc-features{list-style:none}
+.pc-features li{font-size:12px;color:var(--text-muted);padding:4px 0 4px 15px;position:relative;line-height:1.5}
+.pc-features li::before{content:'';position:absolute;left:0;top:10px;width:5px;height:5px;background:var(--green);border-radius:50%;opacity:.55}
+.pc-features li strong{color:var(--text);font-weight:500}
+.setup-card{background:var(--surface2);border:1px solid var(--border-strong);border-radius:14px;padding:22px 26px;margin-bottom:16px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start}
+.setup-body h4{font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;letter-spacing:-.2px}
+.setup-body p{font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:10px}
+.setup-body p:last-child{margin-bottom:0}
+.setup-includes{list-style:none;margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.setup-includes li{font-size:12px;color:var(--text-muted);padding:3px 0 3px 14px;position:relative}
+.setup-includes li::before{content:'';position:absolute;left:0;top:9px;width:5px;height:5px;background:var(--blue);border-radius:50%;opacity:.6}
+.setup-price-col{text-align:right;flex-shrink:0}
+.setup-price-strike{font-size:13px;color:var(--text-dim);text-decoration:line-through;margin-bottom:4px;font-family:'DM Mono',monospace}
+.setup-price-free{font-size:18px;font-weight:600;color:var(--green);font-family:'DM Mono',monospace}
+.setup-price-note{font-size:11px;color:var(--text-dim);margin-top:4px;max-width:120px;line-height:1.4;text-align:right}
+
+/* Bundle card */
+.bundle-card{background:var(--bg);border:2px solid rgba(0,217,126,0.4);border-radius:18px;overflow:hidden;position:relative}
+.bundle-card-header{background:rgba(0,217,126,0.08);border-bottom:1px solid rgba(0,217,126,0.2);padding:28px 32px 24px}
+.bundle-card-body{padding:28px 32px}
+.bundle-title{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.4px;margin-bottom:6px}
+.bundle-subtitle{font-size:13px;color:var(--text-muted);line-height:1.65;max-width:560px}
+.bundle-price-hero{display:flex;align-items:flex-end;gap:20px;margin-top:22px;flex-wrap:wrap}
+.bundle-was-col{display:flex;flex-direction:column;gap:4px;padding-right:20px;border-right:1px solid var(--border-strong)}
+.bundle-was-row{display:flex;align-items:center;gap:8px;}
+.bundle-was-row span:first-child{font-size:11px;color:var(--text-dim);min-width:60px}
+.bundle-was-row span.strike{font-size:14px;color:var(--text-dim);text-decoration:line-through;font-family:'DM Mono',monospace}
+.bundle-now-col{display:flex;flex-direction:column;gap:2px}
+.bundle-now-eyebrow{font-size:11px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--green);margin-bottom:2px}
+.bundle-price-number{font-size:64px;font-weight:700;color:var(--green);letter-spacing:-3px;line-height:1;font-family:'DM Mono',monospace}
+.bundle-price-mo{font-size:16px;font-weight:400;color:var(--text-muted);margin-left:4px;letter-spacing:0}
+.bundle-price-sub{font-size:12px;color:var(--text-muted);margin-top:5px}
+.bundle-savings-pill{display:inline-flex;align-items:center;gap:6px;background:var(--green);color:#0c0c0e;font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;letter-spacing:.2px;margin-top:16px;white-space:nowrap}
+.bundle-includes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.bundle-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bundle-item-name{font-size:13px;font-weight:500;color:var(--text)}
+.bundle-item-price{font-size:12px;color:var(--text-dim);text-decoration:line-through;font-family:'DM Mono',monospace;white-space:nowrap}
+.bundle-perks{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.bundle-perk{display:flex;align-items:flex-start;gap:9px;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:9px;padding:13px 15px}
+.bundle-perk-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px;opacity:.8}
+.bundle-perk-text{font-size:12px;color:var(--text-muted);line-height:1.55}
+.bundle-perk-text strong{color:var(--text);font-weight:500}
+.bundle-divider{height:1px;background:rgba(0,217,126,0.15);margin:0 0 22px}
+.bundle-includes-label{font-size:10px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px}
+
+/* Evolve card */
+.evolve-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 28px;margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+.evolve-icon{width:44px;height:44px;border-radius:11px;background:var(--green-dim);border:1px solid rgba(0,217,126,.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.evolve-body h4{font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;letter-spacing:-.2px}
+.evolve-body p{font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:0}
+.evolve-body p+p{margin-top:10px}
+.evolve-body strong{color:var(--text);font-weight:500}
+@media(max-width:860px){.pricing-cards{grid-template-columns:1fr}.bundle-includes,.bundle-perks{grid-template-columns:1fr}.bundle-price-hero{flex-direction:column;gap:20px}.bundle-was-col{border-right:none;padding-right:0;border-bottom:1px solid var(--border-strong);padding-bottom:16px}.setup-card{grid-template-columns:1fr}.setup-price-col{text-align:left}.setup-includes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="logo-lockup" style="align-items:center;">
+      <img src="data:image/png;base64,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" alt="Matador AI" style="height:40px;width:40px;display:block;border-radius:8px;">
+      <div style="margin-left:12px;">
+        <div style="font-size:17px;font-weight:600;letter-spacing:-.3px;color:var(--text);">Matador AI</div>
+        <div style="font-size:11px;color:var(--text-muted);">Sales ROI Calculator</div>
+      </div>
+    </div>
+    <div class="header-badge">CONFIDENTIAL — FOR DEALER USE</div>
+  </div>
+
+  <div class="section-label">Store inputs</div>
+  <div class="inputs-grid">
+    <div class="inp-card"><label>Monthly internet leads</label><input type="number" id="leads" value="300" min="50" step="50"></div>
+    <div class="inp-card"><label>Avg gross per sold unit ($)</label><input type="number" id="gross" value="2250" min="500" step="250"></div>
+    <div class="inp-card"><label>Internet close rate (%)</label><input type="number" id="close" value="10" min="1" max="50" step="1"></div>
+    <div class="inp-card"><label>Monthly Matador investment ($)</label><input type="number" id="cost" value="2499" min="0" step="100"></div>
+  </div>
+
+  <div class="section-label">Lift scenario</div>
+  <div class="lift-slider-wrap">
+    <div class="lift-slider-top">
+      <div class="lift-label-group">
+        <div class="lift-scenario-name blue" id="scenario-name">Conservative</div>
+        <div class="lift-scenario-desc" id="scenario-desc">Assumes your current processes are reasonably solid and Matador tightens the gaps. A realistic floor for what to expect in the first 90 days.</div>
+      </div>
+      <div class="lift-scenario-badge conservative" id="scenario-badge">Low end estimate</div>
+    </div>
+    <div class="lift-track-labels">
+      <span class="lift-track-label active-blue" id="lbl-0">Conservative</span>
+      <span class="lift-track-label" id="lbl-1">Normal lift</span>
+      <span class="lift-track-label" id="lbl-2">Optimistic</span>
+    </div>
+    <input type="range" class="lift-slider" id="lift-scenario" min="0" max="2" step="1" value="0">
+  </div>
+
+  <div class="section-label">Estimated impact</div>
+  <div class="metrics-grid">
+    <div class="metric-card"><div class="metric-label">Current internet sales / mo</div><div class="metric-value" id="m-current">30</div></div>
+    <div class="metric-card"><div class="metric-label">Blended lift (extra deals / mo)</div><div class="metric-value green" id="m-lift">+2 to +6</div></div>
+    <div class="metric-card highlight"><div class="metric-label">Added gross / month</div><div class="metric-value green" id="m-gross">$5K – $13K</div></div>
+    <div class="metric-card highlight"><div class="metric-label">Net ROI / month</div><div class="metric-value green" id="m-net">$3K – $11K</div></div>
+  </div>
+
+  <div class="overlap-box">
+    <div class="overlap-head">
+      <div class="overlap-icon">&#9432;</div>
+      <div class="overlap-head-text">
+        <h3>Why the feature numbers don't add up to the blended total — and why that's intentional</h3>
+        <p>If you add up the "extra deals" across every feature row below, you'll get a bigger number than the blended estimate at the bottom. That's not a rounding error. It's the most important thing to understand about how this works.</p>
+      </div>
+    </div>
+    <div class="overlap-story">
+      <div class="overlap-story-label">Follow one deal through the system — this is Mike</div>
+      <div class="overlap-step">
+        <div class="overlap-dot">1</div>
+        <div>
+          <div class="overlap-feat">Instant response + after-hours</div>
+          <div class="overlap-text">Mike submits a lead at 9pm Saturday. Matador responds in seconds. Without it, Mike hears nothing until Monday — and he's already texting two other stores by Sunday morning.</div>
+        </div>
+      </div>
+      <div class="overlap-step">
+        <div class="overlap-dot">2</div>
+        <div>
+          <div class="overlap-feat">Follow-up sequences</div>
+          <div class="overlap-text">Mike goes quiet for a few days. The sequence sends a timely, relevant follow-up on day 3. He re-engages. His rep gets notified with the full conversation thread.</div>
+        </div>
+      </div>
+      <div class="overlap-step">
+        <div class="overlap-dot">3</div>
+        <div>
+          <div class="overlap-feat">AI tag-in safety net</div>
+          <div class="overlap-text">Mike replies at noon Tuesday. His rep is with a customer on the lot. The AI steps in, holds the conversation, and keeps the thread warm until the rep is free 20 minutes later.</div>
+        </div>
+      </div>
+      <div class="overlap-step">
+        <div class="overlap-dot">4</div>
+        <div>
+          <div class="overlap-feat">Appointment booking + reminders</div>
+          <div class="overlap-text">Mike books a visit. A confirmation goes out. A reminder fires the morning of. Mike shows up. His rep closes him. One deal — four features that each contributed to getting him there.</div>
+        </div>
+      </div>
+    </div>
+    <div class="overlap-conclusion">
+      That's <strong>one deal</strong> — but four features touched it on the way to the close. If you stacked the feature rows and totaled them, you'd count Mike four times. A GM will catch that immediately and your credibility takes a hit.<br><br>
+      <strong>The blended estimate is the honest number.</strong> It reflects total incremental deals, accounting for the fact that most won deals will have been supported by multiple features working together. Think of it like a football team: the quarterback, the receiver, and the offensive line all contributed to the touchdown. It's still one touchdown — not three.
+    </div>
+  </div>
+
+  <div class="section-label">What Matador actually does for your team and your customers</div>
+  <div class="cx-bar">
+    <div class="cx-card">
+      <div class="cx-icon">&#128101;</div>
+      <div class="cx-title">It supports your people — it doesn't replace them</div>
+      <div class="cx-body">Your reps can't be everywhere at once. Matador handles the nights, weekends, busy floor moments, and 180-day follow-up sequences that no human can sustain consistently. Your team picks up warmer conversations, better-qualified leads, and more confirmed appointments — so they can focus on what they do best: closing deals in front of real people.</div>
+    </div>
+    <div class="cx-card">
+      <div class="cx-icon">&#9201;</div>
+      <div class="cx-title">It gives customers what they actually want: a fast, consistent answer</div>
+      <div class="cx-body">Most dealership communication is slow, inconsistent, and drops off after day 7. Customers don't experience that as a sales problem — they experience it as a service problem. Matador responds instantly, follows up on schedule, and never lets a customer feel ignored. That's a better buying experience, not just a better conversion rate.</div>
+    </div>
+    <div class="cx-card">
+      <div class="cx-icon">&#128200;</div>
+      <div class="cx-title">It turns process gaps into a competitive advantage</div>
+      <div class="cx-body">Every dealership has the same problems: leads going cold, no-shows, dead databases, inconsistent follow-up. Most just accept them. Matador systematically closes those gaps — so while competitors are still losing deals to voicemail and dropped threads, your store is recovering them automatically, every single day.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Feature-level lift — click any row to learn more</div>
+  <div class="feature-section">
+    <div class="table-wrap">
+      <table class="feature-table">
+        <thead>
+          <tr>
+            <th style="width:44%">Feature</th>
+            <th class="right" style="width:26%">Extra deals / mo</th>
+            <th class="right" style="width:30%">Gross impact range</th>
+          </tr>
+        </thead>
+        <tbody id="ftbody"></tbody>
+      </table>
+    </div>
+    <div class="detail-panel">
+      <div class="detail-empty" id="detail-empty">
+        <div class="arrow-icon">&#8599;</div>
+        <p>Click any feature row to see exactly how it works and why it creates lift at your store.</p>
+      </div>
+      <div class="detail-content" id="detail-content">
+        <div class="detail-header">
+          <div class="detail-tag" id="d-tag"></div>
+          <div class="detail-title" id="d-title"></div>
+        </div>
+        <div class="detail-body" id="d-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="roi-note"><div class="dot"></div><p id="roi-note-text"></p></div>
+
+  <div id="roi-visual" style="margin-bottom:32px;"></div>
+
+  <!-- PRICING SECTION -->
+  <div class="pricing-section">
+    <div class="pricing-section-head">
+      <h2>Investment & what's included</h2>
+      <p>Every product below is available standalone. The bundle at the bottom is how most stores get started — it includes everything at a single monthly rate, with setup waived and no invoice for the first 30 days.</p>
+    </div>
+
+    <div class="pricing-cards">
+      <div class="pricing-card featured">
+        <div class="pc-tag">Sales AI</div>
+        <div class="pc-name">Matador Sales AI</div>
+        <div class="pc-price">$2,999 <span>/ month</span></div>
+        <div class="pc-desc">The full Matador communication and automation platform for your sales team. Every tool your team needs to respond faster, follow up longer, and close more — all in one place.</div>
+        <ul class="pc-features">
+          <li><strong>Superhuman AI 2.0</strong> — instant lead response & follow-up</li>
+          <li><strong>AI tag-in safety net</strong> — covers gaps when reps are busy</li>
+          <li><strong>Follow-up sequences</strong> — 60 to 180-day automated cadences</li>
+          <li><strong>Appointment booking + reminders</strong> — books, confirms, reduces no-shows</li>
+          <li><strong>Broadcasting</strong> — up to 1,000 contacts/day, any segment</li>
+          <li><strong>Status-driven automations</strong> — no-show, unsold, sold, lifecycle</li>
+          <li><strong>Matador Video</strong> — record & send personalized vehicle walkarounds</li>
+          <li><strong>2-Way Video</strong> — real-time video conversations in the platform</li>
+          <li><strong>SMS & MMS messaging</strong> — full two-way texting, tracked in CRM</li>
+          <li><strong>Reviews & reputation flows</strong> — automated post-sale review requests</li>
+          <li><strong>Reporting & accountability</strong> — rep-level dashboards, response tracking</li>
+          <li><strong>CRM & DMS integrations</strong> — syncs to your existing stack</li>
+        </ul>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pc-tag">Website</div>
+        <div class="pc-name">Matador AI Website Chat</div>
+        <div class="pc-price">$799 <span>/ month</span></div>
+        <div class="pc-desc">AI-powered chat widget for your dealership website. Engages visitors naturally, answers questions about inventory, pricing, and trade-ins, and converts browsers into CRM-ready leads — 24/7, without any manual effort.</div>
+        <ul class="pc-features">
+          <li>Proactive engagement based on browsing behavior and time on page</li>
+          <li>Answers inventory, pricing, trade-in, and finance questions in real time</li>
+          <li>Captures contact info conversationally — no cold forms</li>
+          <li>Full chat transcript pushed to CRM with intent signals attached</li>
+          <li>Works around the clock — even when your team is offline</li>
+        </ul>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pc-tag">Inbound</div>
+        <div class="pc-name">Voicemail AI</div>
+        <div class="pc-price">$699 <span>/ month</span></div>
+        <div class="pc-desc">Turns missed calls into active conversations. When a call goes to voicemail, Matador instantly follows up via text — re-engaging the customer before they call a competitor. No lead lost to a voicemail box ever again.</div>
+        <ul class="pc-features">
+          <li>Detects missed calls and voicemails in real time</li>
+          <li>Sends an immediate, personalized SMS follow-up automatically</li>
+          <li>AI handles the reply, qualifies the customer, and routes to a rep</li>
+          <li>Covers the 28% of calls that go unanswered at the average dealership</li>
+          <li>Full conversation logged in CRM — nothing falls through the cracks</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Setup card -->
+    <div class="setup-card">
+      <div class="setup-body">
+        <h4>Setup, build, training & integration</h4>
+        <p>This isn't a log-in-and-figure-it-out situation. Every Matador deployment is built from scratch to mirror your store — your process, your tone, your team structure, your CRM workflows. We do the work. You show up on day one with a fully configured system that already sounds like you.</p>
+        <p>Our onboarding team handles every integration, builds your sequences and automations, configures your workflows, and trains your team to use the platform confidently. And it doesn't stop at go-live — ongoing training, support, and optimization are included for as long as you're a partner.</p>
+        <ul class="setup-includes">
+          <li>Full CRM & DMS integration and mapping</li>
+          <li>Custom sequence and automation build</li>
+          <li>Tone and voice calibration to match your store</li>
+          <li>Team training — sales, BDC, and management</li>
+          <li>Go-live support and first-month optimization</li>
+          <li>Ongoing support from a dedicated success team</li>
+          <li>Process reviews and platform updates as you grow</li>
+          <li>A2P registration, compliance setup, and texting activation</li>
+        </ul>
+      </div>
+      <div class="setup-price-col">
+        <div class="setup-price-strike">$1,299 one-time</div>
+        <div class="setup-price-free">WAIVED</div>
+        <div class="setup-price-note">Included free with the bundle below</div>
+      </div>
+    </div>
+
+    <!-- Bundle card -->
+    <div class="bundle-card">
+      <div class="bundle-card-header">
+        <div class="bundle-title">The full Matador bundle</div>
+        <div class="bundle-subtitle">Everything above — Sales AI, Website Chat, Voicemail AI, and full setup — in one monthly investment. One platform. One team. Built around your store from day one. This is how we work with most dealer partners.</div>
+
+        <div class="bundle-price-hero">
+          <div class="bundle-was-col">
+            <div style="font-size:10px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">What it lists for</div>
+            <div class="bundle-was-row"><span>Sales AI</span><span class="strike">$2,999/mo</span></div>
+            <div class="bundle-was-row"><span>Website Chat</span><span class="strike">$799/mo</span></div>
+            <div class="bundle-was-row"><span>Voicemail AI</span><span class="strike">$699/mo</span></div>
+            <div class="bundle-was-row"><span>Setup</span><span class="strike">$1,299</span></div>
+            <div style="height:1px;background:var(--border-strong);margin:10px 0;"></div>
+            <div class="bundle-was-row"><span style="font-weight:500;color:var(--text-muted);">Total</span><span class="strike" style="font-size:16px;color:var(--text-muted);">$5,796</span></div>
+          </div>
+          <div class="bundle-now-col">
+            <div class="bundle-now-eyebrow">Your rate</div>
+            <div>
+              <span class="bundle-price-number">$2,499</span><span class="bundle-price-mo">/mo</span>
+            </div>
+            <div class="bundle-price-sub">Setup waived &nbsp;·&nbsp; First invoice 30 days from signing</div>
+            <div class="bundle-savings-pill">
+              &#10003;&nbsp; You save $3,297 — every single month
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bundle-card-body">
+        <div class="bundle-includes-label">What's included</div>
+        <div class="bundle-includes">
+          <div class="bundle-item"><span class="bundle-item-name">Sales AI</span><span class="bundle-item-price">$2,999/mo</span></div>
+          <div class="bundle-item"><span class="bundle-item-name">Website Chat</span><span class="bundle-item-price">$799/mo</span></div>
+          <div class="bundle-item"><span class="bundle-item-name">Voicemail AI</span><span class="bundle-item-price">$699/mo</span></div>
+        </div>
+        <div class="bundle-divider"></div>
+        <div class="bundle-perks">
+          <div class="bundle-perk">
+            <div class="bundle-perk-dot"></div>
+            <div class="bundle-perk-text"><strong>Setup fee waived.</strong> Full build, integration, training, and go-live support — $1,299 value, included at no charge.</div>
+          </div>
+          <div class="bundle-perk">
+            <div class="bundle-perk-dot"></div>
+            <div class="bundle-perk-text"><strong>No charge for the first 30 days.</strong> There is no invoicing for the first 30 days after signing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evolve card -->
+    <div class="evolve-card">
+      <div class="evolve-icon">&#9881;</div>
+      <div class="evolve-body">
+        <h4>This isn't a set-it-and-forget-it tool. It's a system that grows with you.</h4>
+        <p>Matador is <strong>completely customizable — ongoing</strong>. Any time your process changes, your team evolves, or you want to try something new, our support team makes it happen. New automations, updated sequences, adjusted tone, new workflows — it's all on us. You'll never have to figure it out alone.</p>
+        <p>Over time, Matador learns your store. It starts to sound like your people, reflect your culture, and fit your process so naturally that customers don't experience it as a tool — they experience it as <strong>a seamless, always-on extension of your team</strong>. The right response, in the right tone, at the right moment. Every time. For every customer. Without anyone having to think about it.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA / Contact -->
+  <div style="margin-top:40px;background:var(--surface2);border:1px solid var(--border-strong);border-radius:16px;padding:28px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.3px;margin-bottom:6px;">Ready to talk numbers for your store?</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.65;max-width:480px;">Every store is different. Plug in your numbers above and let's walk through what this looks like specifically for you — your leads, your gross, your process.</div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:var(--green-dim);border:1px solid rgba(0,217,126,.2);display:flex;align-items:center;justify-content:center;font-size:14px;">&#128222;</div>
+          <a href="tel:+12896980208" style="font-size:14px;font-weight:500;color:var(--text);text-decoration:none;">289-698-0208</a>
+        </div>
+        <div style="width:1px;height:20px;background:var(--border-strong);"></div>
+        <div style="font-size:12px;color:var(--text-muted);">Shaun Yates &nbsp;·&nbsp; Senior GTM Solutions Engineer, Strategic Accounts, Matador AI</div>
+      </div>
+    </div>
+    <a href="https://calendar.app.google/hqiJ35hjPMCQmHg26" target="_blank" style="display:inline-flex;align-items:center;gap:10px;background:var(--green);color:#0c0c0e;font-size:14px;font-weight:600;padding:13px 24px;border-radius:10px;text-decoration:none;white-space:nowrap;flex-shrink:0;letter-spacing:-.1px;">
+      <span style="font-size:16px;">&#128197;</span>
+      Schedule a short with Shaun
+    </a>
+  </div>
+
+  <!-- Save / Download bar -->
+  <div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div style="font-size:13px;color:var(--text-muted);line-height:1.5;">
+      <span style="color:var(--text);font-weight:500;">Want to save this?</span>&nbsp; Download a copy to keep on file, share with your team, or reference after our conversation.
+    </div>
+    <div style="display:flex;gap:10px;flex-shrink:0;flex-wrap:wrap;">
+      <button onclick="downloadHTML()" style="display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border-strong);color:var(--text);font-size:13px;font-weight:500;padding:10px 20px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;" onmouseover="this.style.background='#2a2a32'" onmouseout="this.style.background='var(--surface2)'">
+        <span style="font-size:15px;">&#8681;</span> Download file
+      </button>
+      <button onclick="printPDF()" style="display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border-strong);color:var(--text);font-size:13px;font-weight:500;padding:10px 20px;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s;" onmouseover="this.style.background='#2a2a32'" onmouseout="this.style.background='var(--surface2)'">
+        <span style="font-size:15px;">&#128438;</span> Save as PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Projections are directional estimates based on typical dealership outcomes. Actual results vary by store, team, process maturity, and market. Use as a conversation starting point, not a guarantee.</p>
+    <p style="color:var(--text-muted);font-weight:500;white-space:nowrap">matador.ai</p>
+  </div>
+</div>
+
+<script>
+const scenarios=[
+  {name:'Conservative',nameClass:'blue',desc:'Assumes your current processes are reasonably solid and Matador tightens the gaps. A realistic floor for what to expect in the first 90 days.',badge:'Low end estimate',badgeClass:'conservative',lowMult:.6,highMult:.7},
+  {name:'Normal lift',nameClass:'green',desc:'The typical outcome for a dealer who adopts Matador and uses the core features consistently. What most stores see within 3–6 months.',badge:'Most common outcome',badgeClass:'normal',lowMult:1.0,highMult:1.0},
+  {name:'Optimistic',nameClass:'amber',desc:'Stores with active BDC teams, high lead volume, and strong database utilization — broadcasting, sequences, and automations all firing. Seen regularly at high-performing stores.',badge:'High adoption stores',badgeClass:'optimistic',lowMult:1.3,highMult:1.6}
+];
+
+const features=[
+  {name:'Instant lead response + after-hours',hint:'AI responds in seconds — 24/7, nights, weekends, holidays',low:2,high:4,tag:'Speed to lead',
+  stats:[{val:'5 min',lbl:'Response window that converts'},{val:'40%+',lbl:'Of leads submit outside business hours'}],
+  body:`<p>When a shopper submits a lead, they're in active buying mode. Responding within the first five minutes dramatically increases contact rate. After an hour, that probability drops by over 90%. Most dealership teams can't hit that window consistently — nights, weekends, busy floor days all create gaps.</p><p>Matador's AI responds instantly, every time — <strong>24 hours a day, 7 days a week</strong>. It engages immediately, personalizes the message to what the customer inquired about, and starts the conversation before any competitor gets a chance. Your team wakes up to warm threads, not cold leads.</p><p><strong>For your customers:</strong> Nobody wants to wait 18 hours to hear back from a dealership. Instant response is what customers expect — Matador makes your store the one that actually delivers it, every single time.</p>`,
+  bullets:['Responds in seconds — no manual intervention needed','Handles nights, weekends, and holidays without staffing changes','Keeps your store competitive even when your best closers are offline','Every response is personalized to the vehicle and inquiry submitted']},
+
+  {name:'Follow-up sequences',hint:'Persistent, personalized follow-up for 60–180 days',low:2,high:5,tag:'Long-game follow-up',
+  stats:[{val:'180 days',lbl:'Active follow-up window'},{val:'~80%',lbl:'Of leads die after day 7 without automation'}],
+  body:`<p>The industry average for how long a salesperson manually follows up is about a week. After that, outreach dies off. But buyers take 30, 60, even 90+ days to decide. Life gets in the way. Trade-in timing matters. Financing situations change. If your team isn't still present in that conversation three months later, someone else will be.</p><p>Matador runs <strong>multi-touch follow-up sequences that keep working long after your team has moved on</strong> — not generic blast messages, but contextual outreach that feels like a real person paying attention. Every reply routes immediately back to the sales team to take over.</p><p><strong>For your team:</strong> This eliminates the grind of manual 30-day follow-ups. Your reps stay focused on active conversations while the platform keeps older leads warm and surfaces them back up when they're ready to move.</p>`,
+  bullets:['Automated sequences running up to 6 months without manual effort','Re-engages dormant leads the sales team has already written off','Touchpoints timed to feel natural, not like a drip spam campaign','Every reply routes directly back to the rep with full conversation context']},
+
+  {name:'AI tag-in safety net',hint:'Steps in the moment a rep goes quiet on a live conversation',low:1,high:3,tag:'No lead left behind',
+  stats:[{val:'>30 min',lbl:'Avg rep response lag during busy periods'},{val:'~60%',lbl:'Of buyers go with the first dealer to respond'}],
+  body:`<p>Here's a scenario that plays out every day at every dealership: a customer texts back, the rep is with someone on the lot, and that reply just sits there. 20 minutes go by. 40 minutes. The customer — who was engaged and ready to talk — has already messaged two other stores.</p><p>The AI tag-in fires automatically when a customer sends a message and no human responds within a defined threshold. <strong>Matador steps in, holds the conversation, and keeps them warm until the rep is available.</strong> The customer doesn't experience the gap. The rep picks up a warm thread instead of a dead one.</p><p><strong>For your customers:</strong> Nobody should feel ignored mid-conversation. The AI tag-in ensures every customer gets acknowledged immediately — even when your team is stretched. That's the kind of responsiveness that builds trust and wins business.</p>`,
+  bullets:['Triggers when response time exceeds your defined threshold','AI holds the conversation in a natural, branded voice','Rep receives a notification with full context to step back in','Works across text, website chat, and all connected channels']},
+
+  {name:'Appointment booking + reminders',hint:'Books it, confirms it, and makes sure they show up',low:1,high:3,tag:'Show rate optimization',
+  stats:[{val:'~40%',lbl:'Industry avg no-show rate without reminders'},{val:'2–3x',lbl:'Show rate lift with structured SMS confirmation'}],
+  body:`<p>Getting a customer to book is only half the job. The other half is getting them through the door. Without a structured confirmation and reminder system, no-show rates run between 30 and 50 percent at most stores. That's your BDC booking appointments that never walk in — wasted time, wasted floorplan, and wasted closers.</p><p>Matador handles the full appointment workflow: <strong>books through conversation, sends a calendar confirmation, and runs a reminder sequence</strong> — 24-hour and same-day via text. If the customer needs to reschedule, the AI handles that too and keeps the lead alive instead of letting it go cold.</p><p><strong>For your customers:</strong> A reminder text the morning of an appointment isn't annoying — it's considerate. Most customers appreciate the heads-up and are far more likely to follow through when they feel the dealership is organized and expecting them.</p>`,
+  bullets:['Books directly in conversation — no separate scheduling tool','Calendar invite sent to the customer phone automatically','Customizable reminder cadence: 24hr, 2hr, same-day morning','Cancellations trigger immediate AI re-engagement to rebook']},
+
+  {name:'Broadcasting',hint:'Monetizes your dead lead database with targeted SMS campaigns',low:2,high:6,tag:'Database monetization',
+  stats:[{val:'98%',lbl:'SMS open rate vs 20% for email'},{val:'1,000/day',lbl:'Contacts per day — old leads, customers, showroom visits, any segment'},{val:'$0',lbl:'Additional ad spend required'}],
+  body:`<p>Most dealerships are sitting on a goldmine they're not touching: a CRM full of people who raised their hand and went quiet. Unsold customers from last month. Leads from six months ago who weren't ready. Service customers who might be in equity. Prior buyers due for an upgrade.</p><p>Broadcasting lets you send targeted, conversational text campaigns to any segmented list. <strong>Matador supports up to 1,000 contacts per day</strong>, each with different, personalized messaging by segment — old leads get one message, showroom visits get another, current customers get something else entirely. A 98% open rate on SMS means your message actually gets read. The AI qualifies every reply and flags the hot ones for your team immediately.</p><p><strong>For your store:</strong> This is proactive revenue from a database you already own. While competitors are spending money on new leads, you're re-monetizing the ones you already paid for — at near-zero cost. Dealers regularly pull 3–8 deals per targeted broadcast send.</p>`,
+  bullets:['Segment by model interest, lead status, last contact date, equity position, and more','Messages are conversational — reads like a real person, not a mass blast','AI qualifies every reply and identifies who is ready to move','Up to 1,000 contacts per day across any combination of segments']},
+
+  {name:'Status-driven automations',hint:'Fires the right message the moment a CRM status changes',low:1,high:4,tag:'Process automation',
+  stats:[{val:'<2 hrs',lbl:'Best window to follow up a no-show'},{val:'Same day',lbl:'When unsold follow-up is most effective'}],
+  body:`<p>The best follow-up is timely, contextual, and consistent. The problem is that consistent timely follow-up requires your team to be disciplined about CRM entries and to act at exactly the right moment — which is nearly impossible to sustain across a full sales floor every day without someone dropping the ball.</p><p>Matador watches your CRM in real-time and <strong>fires the right message the moment a status changes</strong>. Customer marked no-show? AI reaches out within the hour. Marked unsold? A structured sequence starts immediately. Delivered? A post-delivery message protects your CSI and sets the tone for the long-term relationship.</p><p><strong>For your team:</strong> This is the systematic follow-through that only your best reps do on their best months. Matador does it automatically for every customer, every time, without relying on anyone to remember.</p>`,
+  bullets:['No-show follow-up triggers in minutes — while the customer is still close','Unsold sequences are multi-touch and run for 30–90 days automatically','Post-sale flows protect CSI and reduce buyer\'s remorse cancellations','Price drop and inventory alerts bring warm shoppers back to the right unit']},
+
+  {name:'Website chat',hint:'Captures shoppers who would never fill out a static form',low:1,high:2,tag:'Top-of-funnel capture',
+  stats:[{val:'~97%',lbl:'Of website visitors leave without submitting a form'},{val:'3–5x',lbl:'Higher engagement rate vs static lead forms'}],
+  body:`<p>Most dealership websites are built around static forms that ask customers for name, email, and phone before giving them anything in return. Conversion rates on those forms are terrible. Most shoppers won't fill them out — they're browsing, comparing, not committing. But they would engage with a conversation.</p><p>Matador's website chat puts an AI-powered widget on your site that <strong>engages visitors naturally</strong> — answering questions about inventory, pricing, trade-ins, and availability. Instead of a cold form submission, you get a warm lead who's already told the AI what they want, pushed directly into your CRM with the full conversation attached.</p><p><strong>For your customers:</strong> Shoppers want answers, not forms. Website chat meets them where they are — mid-browse, mid-decision — and gives them a real interaction instead of a dead end. That's the experience that turns a browser into an appointment.</p>`,
+  bullets:['Engages visitors based on the page they are on — VDP, trade, service, finance','Answers common questions instantly, reducing drop-off and bounce','Captures contact info conversationally — feels natural, not like a wall','Full chat transcript syncs to CRM with vehicle interest and intent signals']},
+
+  {name:'Video messaging',hint:'Personalizes the experience and moves buyers off the fence',low:1,high:2,tag:'Engagement & trust',
+  stats:[{val:'~8x',lbl:'Higher reply rate vs plain text messages'},{val:'Faster',lbl:'Purchase decisions when customer sees the actual car on video'}],
+  body:`<p>Buying a car is still an emotional purchase, and most of that emotion gets squeezed out in the text-and-email back-and-forth. A text doesn't build rapport. A video does. When a customer gets a 90-second clip from their rep — walking the exact vehicle they inquired about, pointing out the features they mentioned — the dynamic shifts. You go from being one of six dealers in their inbox to the one they actually feel connected to.</p><p>Matador lets your team <strong>record and send personalized vehicle walkarounds, intro videos, and follow-up clips</strong> directly through the platform. Videos are mobile-optimized, trackable, and tied to the CRM thread. You can see when a customer watched — which tells you exactly when to follow up.</p><p><strong>For your customers:</strong> A personalized video is the closest thing to an in-person experience before the visit. It answers questions visually, builds trust faster, and makes customers feel like they're dealing with a real person who took time for them specifically.</p>`,
+  bullets:['Reps record and send directly from their phone — no setup or editing required','Video plays inline in the text thread — no link clicking, no friction','View tracking alerts the rep the moment a customer watches','Works for walkarounds, trade explanations, finance updates, and welcome videos']},
+
+  {name:'Reviews + reputation flows',hint:'Generates more 5-star reviews and catches unhappy customers first',low:0,high:1,tag:'Reputation protection',
+  stats:[{val:'88%',lbl:'Of buyers check reviews before visiting'},{val:'1 star',lbl:'Rating drop reduces leads by 5–9%'}],
+  body:`<p>A dealer's online reputation is either a lead generation asset or a lead killer. The problem is that unhappy customers are far more motivated to leave a review on their own than happy ones are. Without a systematic way to ask satisfied customers at the right moment, your rating drifts toward the negative edge cases over time.</p><p>Matador's review flows <strong>automate the ask after delivery or after a positive service visit</strong>. The request goes out via text — dramatically higher response rate than email. If a customer has a concern, the flow catches it before they hit Google, routing it to your team for resolution first.</p><p><strong>For your customers:</strong> This is good customer service, not just reputation management. Checking in after a purchase shows you care about the experience beyond the transaction. Customers notice that — and so do the thousands of shoppers reading your reviews before they decide whether to call.</p>`,
+  bullets:['Review request triggers automatically after delivery or service visit','Negative sentiment is intercepted and routed to management before going public','Drives review volume to Google, DealerRater, Cars.com, or your priority platform','Fresh review volume signals trust and recency to search ranking algorithms']},
+
+  {name:'Reporting + accountability',hint:'Shows managers exactly where deals are dying in real time',low:0,high:2,tag:'Process visibility',
+  stats:[{val:'~35%',lbl:'Of internet leads never receive a meaningful follow-up'},{val:'Blind spots',lbl:'Most GMs can\'t see which reps are dropping the ball until it\'s too late'}],
+  body:`<p>Most dealerships don't have a clear picture of what's actually happening in their digital communication pipeline. Leads come in, conversations start, and then things get fuzzy. Who followed up? Who didn't? Which rep has a thread sitting for three days? Which leads are 45 days old with no second touch?</p><p>Matador's reporting gives managers a <strong>real-time, conversation-level view of the entire pipeline</strong> — response times by rep, lead status distribution, follow-up activity, and opportunities at risk of going cold. Not a vanity dashboard. A tool that tells you where deals are dying so you can do something about it before it's too late.</p><p><strong>For your managers:</strong> You can't coach what you can't see. Stores that implement accountability reporting consistently find a meaningful percentage of leads being mishandled — not out of bad intent, but because there was no visibility. Fixing those gaps directly translates to closed deals.</p>`,
+  bullets:['Rep-level response time tracking — surfaces your slowest and fastest responders','Lead age and follow-up heat maps — see exactly what is at risk right now','Manager alerts for threads that go too long without a human response','Exportable activity reports built for weekly team reviews and coaching']}
+];
+
+const BASE_LOW=4,BASE_HIGH=8;
+const maxFeatHigh=Math.max(...features.map(f=>f.high));
+const fmt=v=>'$'+Math.round(v).toLocaleString();
+const fmtK=v=>Math.abs(v)>=1000?'$'+(Math.round(v/100)/10).toFixed(0)+'K':'$'+Math.round(v);
+let activeIdx=null;
+
+function getScenario(){return scenarios[+document.getElementById('lift-scenario').value];}
+
+function showDetail(idx){
+  const f=features[idx];
+  document.getElementById('detail-empty').style.display='none';
+  const dc=document.getElementById('detail-content');
+  dc.classList.add('visible');
+  document.getElementById('d-tag').textContent=f.tag;
+  document.getElementById('d-title').textContent=f.name;
+  const statsHtml='<div class="d-stats">'+f.stats.map(s=>`<div class="d-stat"><div class="d-stat-val">${s.val}</div><div class="d-stat-lbl">${s.lbl}</div></div>`).join('')+'</div>';
+  const bulletsHtml='<ul class="d-bullets">'+f.bullets.map(b=>`<li>${b}</li>`).join('')+'</ul>';
+  document.getElementById('d-body').innerHTML=statsHtml+f.body+bulletsHtml;
+  document.querySelectorAll('.feature-row').forEach((row,i)=>{
+    const isA=i===idx;
+    row.classList.toggle('active',isA);
+    const btn=row.querySelector('.expand-btn');
+    if(btn)btn.textContent=isA?'×':'→';
+  });
+  activeIdx=idx;
+}
+
+function updateScenarioUI(){
+  const s=getScenario();
+  const si=+document.getElementById('lift-scenario').value;
+  document.getElementById('scenario-name').textContent=s.name;
+  document.getElementById('scenario-name').className='lift-scenario-name '+s.nameClass;
+  document.getElementById('scenario-desc').textContent=s.desc;
+  const badge=document.getElementById('scenario-badge');
+  badge.textContent=s.badge;
+  badge.className='lift-scenario-badge '+s.badgeClass;
+  const activeClasses=['active-blue','active-green','active-amber'];
+  ['lbl-0','lbl-1','lbl-2'].forEach((id,i)=>{
+    document.getElementById(id).className='lift-track-label'+(i===si?' '+activeClasses[i]:'');
+  });
+}
+
+function render(){
+  const leads=Math.max(1,+document.getElementById('leads').value||300);
+  const gross=Math.max(1,+document.getElementById('gross').value||2250);
+  const cost=Math.max(0,+document.getElementById('cost').value||2499);
+  const closeRate=Math.max(0.01,(+document.getElementById('close').value||10)/100);
+  const scale=leads/300;
+  const s=getScenario();
+  const adjLow=Math.max(1,Math.round(BASE_LOW*scale*s.lowMult));
+  const adjHigh=Math.max(1,Math.round(BASE_HIGH*scale*s.highMult));
+  const currentSales=Math.round(leads*closeRate);
+  const grossLow=adjLow*gross,grossHigh=adjHigh*gross;
+  const netLow=grossLow-cost,netHigh=grossHigh-cost;
+
+  document.getElementById('m-current').textContent=currentSales;
+  document.getElementById('m-lift').textContent='+'+adjLow+' to +'+adjHigh;
+  document.getElementById('m-gross').textContent=fmtK(grossLow)+' – '+fmtK(grossHigh);
+  document.getElementById('m-net').textContent=fmtK(Math.max(0,netLow))+' – '+fmtK(Math.max(0,netHigh));
+  document.getElementById('roi-note-text').innerHTML=`Based on the <strong>${s.name.toLowerCase()}</strong> scenario — after the <strong>$${cost.toLocaleString()}/mo</strong> Matador investment, estimated net ROI is <strong>${fmt(Math.max(0,netLow))} to ${fmt(Math.max(0,netHigh))} per month</strong>, or <strong>${fmt(Math.max(0,netLow)*12)} to ${fmt(Math.max(0,netHigh)*12)} annualized</strong>. The blended estimate is the number to present — feature rows show where the lift comes from, not separate stacked totals.`;
+
+  const tbody=document.getElementById('ftbody');
+  tbody.innerHTML='';
+  features.forEach((f,idx)=>{
+    const fl=Math.round(f.low*scale*s.lowMult);
+    const fh=Math.round(f.high*scale*s.highMult);
+    const pct=Math.round((f.high/maxFeatHigh)*100);
+    const dealsStr=fl===fh?(fl===0?'—':'+'+fl):'+'+fl+' – +'+fh;
+    const isActive=idx===activeIdx;
+    const tr=document.createElement('tr');
+    tr.className='feature-row'+(isActive?' active':'');
+    tr.innerHTML=`<td><div class="feat-name-cell"><div><div class="feat-name-text">${f.name}</div><div class="feat-hint">${f.hint}</div></div><div class="expand-btn">${isActive?'×':'→'}</div></div></td><td class="right"><div class="bar-container"><span class="deal-range">${dealsStr}</span><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div></div></td><td class="right"><span class="gross-range">${fmt(fl*gross)} – ${fmt(fh*gross)}</span></td>`;
+    tr.addEventListener('click',()=>{
+      if(activeIdx===idx){
+        activeIdx=null;
+        document.querySelectorAll('.feature-row').forEach(r=>{r.classList.remove('active');const b=r.querySelector('.expand-btn');if(b)b.textContent='→';});
+        document.getElementById('detail-empty').style.display='flex';
+        document.getElementById('detail-content').classList.remove('visible');
+      } else {showDetail(idx);}
+    });
+    tbody.appendChild(tr);
+  });
+
+  const btr=document.createElement('tr');
+  btr.className='blended';
+  btr.innerHTML=`<td><div class="blended-label">Blended estimate <span class="blended-badge">USE THIS</span></div></td><td class="right"><span class="blended-deals">+${adjLow} to +${adjHigh}</span></td><td class="right"><span class="gross-range green">${fmt(grossLow)} – ${fmt(grossHigh)}</span></td>`;
+  tbody.appendChild(btr);
+
+  renderROIVisual(grossLow, grossHigh, cost, adjLow, adjHigh, gross);
+}
+
+function renderROIVisual(grossLow, grossHigh, cost, adjLow, adjHigh, gross) {
+  const el = document.getElementById('roi-visual');
+  const netLow = Math.max(0, grossLow - cost);
+  const netHigh = Math.max(0, grossHigh - cost);
+  const roiLow = cost > 0 ? Math.round((netLow / cost) * 100) : 0;
+  const roiHigh = cost > 0 ? Math.round((netHigh / cost) * 100) : 0;
+  const maxVal = grossHigh * 1.08;
+  const invPct = Math.round((cost / maxVal) * 100);
+  const lowPct = Math.round((grossLow / maxVal) * 100);
+  const highPct = Math.round((grossHigh / maxVal) * 100);
+
+  el.innerHTML = `
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 30px;">
+
+    <div style="font-size:11px;font-weight:500;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:20px;">Your investment vs your return</div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:16px 18px;">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Monthly investment</div>
+        <div style="font-size:26px;font-weight:600;color:var(--text);letter-spacing:-.6px;line-height:1;">${fmt(cost)}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">per month</div>
+      </div>
+      <div style="background:rgba(0,217,126,.06);border:1px solid rgba(0,217,126,.2);border-radius:11px;padding:16px 18px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green);"></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Added gross / month</div>
+        <div style="font-size:26px;font-weight:600;color:var(--green);letter-spacing:-.6px;line-height:1;">${fmtK(grossLow)} – ${fmtK(grossHigh)}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">${adjLow} to ${adjHigh} extra deals</div>
+      </div>
+      <div style="background:rgba(0,217,126,.06);border:1px solid rgba(0,217,126,.2);border-radius:11px;padding:16px 18px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green);"></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Net return / month</div>
+        <div style="font-size:26px;font-weight:600;color:var(--green);letter-spacing:-.6px;line-height:1;">${fmtK(netLow)} – ${fmtK(netHigh)}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">${roiLow}% – ${roiHigh}% ROI</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;color:var(--text-muted);">Monthly investment</span>
+        <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-muted);">${fmt(cost)}</span>
+      </div>
+      <div style="height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;">
+        <div style="height:100%;width:${invPct}%;background:#4a8fff;border-radius:5px;transition:width .4s ease;"></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;color:var(--text-muted);">Low case gross return</span>
+        <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text-muted);">${fmt(grossLow)}</span>
+      </div>
+      <div style="height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;">
+        <div style="height:100%;width:${lowPct}%;background:rgba(0,217,126,.55);border-radius:5px;transition:width .4s ease;"></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:28px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;color:var(--text-muted);">High case gross return</span>
+        <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--green);">${fmt(grossHigh)}</span>
+      </div>
+      <div style="height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;">
+        <div style="height:100%;width:${highPct}%;background:#00d97e;border-radius:5px;transition:width .4s ease;"></div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Annual net (low)</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.4px;">${fmtK(netLow*12)}</div>
+      </div>
+      <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Annual net (high)</div>
+        <div style="font-size:20px;font-weight:600;color:var(--green);letter-spacing:-.4px;">${fmtK(netHigh*12)}</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Return on investment</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.4px;">${roiLow}% – ${roiHigh}%</div>
+      </div>
+    </div>
+
+  </div>`;
+}
+
+document.getElementById('lift-scenario').addEventListener('input',()=>{updateScenarioUI();render();});
+['leads','gross','cost','close'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+updateScenarioUI();
+render();
+
+function downloadHTML(){
+  const blob=new Blob([document.documentElement.outerHTML],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Matador-AI-ROI-Calculator.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function printPDF(){
+  window.print();
+}
+</script>
+</body>
+</html>
